@@ -1,8 +1,11 @@
 package classloading_test.classloading.masterRecorderFunctions;
 
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionList;
+
+import classloading_test.classloading.added.MasterRecorder;
 
 /**
  * Utility class for adding instrumentation for the
@@ -18,6 +21,11 @@ public interface MasterRunnerFunctions {
 	 * @return
 	 */
 	public static InstructionList logReadField(ConstantPoolGen cpg) {
-		return null;
+		// first load the method into the constant pool
+		int mr = cpg.addMethodref(MasterRecorder.class.getName().replace(".", "/"), "onReadField", 
+				"(Ljava/lang/Object;Ljava/lang/String;)V");
+		InstructionList result = new InstructionList();
+		result.append(new INVOKESTATIC(mr));
+		return result;
 	}
 }

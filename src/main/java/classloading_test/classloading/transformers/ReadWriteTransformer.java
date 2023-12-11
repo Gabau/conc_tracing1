@@ -86,7 +86,7 @@ public class ReadWriteTransformer implements ClassFileTransformer {
 				ConstantFieldref fieldRef = 
 						(ConstantFieldref) method.getConstantPool().getConstant(cpIndex);
 				int fieldRefStringLoc = this.addFieldRefToConstantPool(fieldRef, method.getConstantPool());
-				// push this to 
+				// push this to
 				LDC fieldRefLDC = new LDC(fieldRefStringLoc);
 				// invoke the function.
 				InstructionList masterRunnerInvokation = MasterRunnerFunctions.logReadField(method.getConstantPool());

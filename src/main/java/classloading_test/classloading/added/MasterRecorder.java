@@ -12,6 +12,7 @@ import classloading_test.classloading.models.TreeId;
  *
  */
 public class MasterRecorder {
+	
 	// the read count vector
 	public static ConcurrentHashMap<Long, ConcurrentHashMap<Long, Integer>> rcVector = new ConcurrentHashMap<>(); 
 	// the lastwrite location
@@ -21,11 +22,18 @@ public class MasterRecorder {
 	// stores the max id map.
 	public static ConcurrentHashMap<Long, TreeId> threadMaxId = new ConcurrentHashMap<>();
 	
+	
 
 	// used to assign unique id to all shared objects
 	public static long maxObjectId = 0;
 	
-	public static void onGetField(String value) {
+	// will rely on System.identityHashCode for now
+	// todo: switch to a more accurate method of determining a
+	// unique id.
+	// current idea -> use System identity hash code
+	// + className if there is a collision
+	public static void onReadField(Object o, String value) {
+		int sharedLocation = System.identityHashCode(o);
 		
 	}
 	

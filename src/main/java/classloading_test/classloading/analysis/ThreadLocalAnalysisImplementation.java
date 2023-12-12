@@ -16,11 +16,15 @@ import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.MethodGen;
 
+import classloading_test.classloading.analysis.pta.FakeStack;
+
 public class ThreadLocalAnalysisImplementation implements ThreadLocalAnalysis {
 	
 	private int getNumOnStack(InvokeInstruction instruction, ConstantPoolGen cpg) {
 		return 0;
 	}
+	
+	
 	
 	/**
 	 * Generic idea:
@@ -63,6 +67,7 @@ public class ThreadLocalAnalysisImplementation implements ThreadLocalAnalysis {
 			throw new ClassNotFoundException();
 		}
 		// generate possible locations of objects
+		// performing PTA on locations
 		MethodGen mg = new MethodGen(actualEntryMethod, entryClass, cg.getConstantPool());
 		FakeStack currentFakeStack = null;
 		for (InstructionHandle instr : mg.getInstructionList()) {

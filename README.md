@@ -16,6 +16,15 @@ TODO:
  - [ ] Record write execution
  - [ ] Store the variables to keep track of in a class to be populated by some form of file
  - [ ] Deal with java arrays (Also a potential shared memory location)
+ - [ ] Resolving virtual functions
+  * Currently working approach has a restriction, the input class is not treated as a subclass.
+ 
+ 
+ Thread local analysis todo:
+  - [ ] Deal with static case
+  
+ Optimisations:
+  - [ ] Reduce memory usage by using a flyweight
 
 Problems faced:
  * Instrumentation of Thread -> need to enable retransformable classes + add Can-RetransformClasses to manifest
@@ -32,3 +41,15 @@ Problems faced:
 Some thoughts:
  * Local variables should not have any problems, as they can only be read iff they are final
    * Therefore fields are the more impt parts.
+   
+   
+## Additional thoughts
+
+
+### On using stack based points to propogation.
+
+Each code block should use the same amound of stack and push the same amount of values.
+Since this is consistent, we can merge two stacks together, so we do not have to
+double execute every time there is a branch.
+The question is what it means to merge two stacks.
+ * Idea: Have an extended object which refers to multiple objects.

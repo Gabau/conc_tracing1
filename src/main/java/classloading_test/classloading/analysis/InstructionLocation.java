@@ -2,11 +2,25 @@ package classloading_test.classloading.analysis;
 
 import org.apache.bcel.classfile.Method;
 
+/**
+ * Represents an instruction location.
+ * @author Gabau
+ *
+ */
 public class InstructionLocation {
-	private int instructionLocation;
-	private Method method;
+	public static enum Type {
+		STATIC_CREATION, // created as a static object
+		METHOD, // in a method
+		PARAMETER, // the parameter of the method -> only needed for the entry point.
+		NEW_CREATION, // created by new instruction
+		NEW_ARRAY // created via a new array
+	}
+	protected int instructionLocation;
+	protected Method method;
 	// class name used to access the location
-	private String className;
+	protected String className;
+	protected Type instructionType;
+
 	
 	@Override
 	public boolean equals(Object obj) {

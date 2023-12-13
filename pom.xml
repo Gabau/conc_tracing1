@@ -4,12 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>classloading_test</groupId>
-  <artifactId>classloading</artifactId>
+  <groupId>conctrace</groupId>
+  <artifactId>conctrace</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
 
-  <name>classloading</name>
+  <name>conctrace</name>
   <url>http://www.example.com</url>
 
   <properties>
@@ -68,7 +68,7 @@
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 							<manifestEntries>
                             <!-- Specify the Premain-Class for your agent -->
-                            	<Premain-Class>classloading_test.classloading.Premain</Premain-Class>
+                            	<Premain-Class>conc_trace.instr.Premain</Premain-Class>
                    	
                             	<Can-Retransform-Classes>true</Can-Retransform-Classes>
                             </manifestEntries>

@@ -4,6 +4,7 @@ import org.apache.bcel.classfile.Method;
 
 /**
  * Represents an instruction location.
+ * Unique for a given CFG instruction
  * @author Gabau
  *
  */
@@ -21,6 +22,9 @@ public class InstructionLocation {
 	protected String className;
 	protected Type instructionType;
 
+	public static InstructionLocation fromCFGInstruction(JavaInstructionCFGNode node, int instruction) {
+		return null;
+	}
 	
 	@Override
 	public boolean equals(Object obj) {

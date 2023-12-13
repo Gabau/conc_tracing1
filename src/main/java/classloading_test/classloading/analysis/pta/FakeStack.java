@@ -72,6 +72,10 @@ public class FakeStack {
 		stack.push(type);
 		return this;
 	}
+	
+	public void clear() {
+		this.stack.clear();
+	}
 
 	@Override
 	public int hashCode() {

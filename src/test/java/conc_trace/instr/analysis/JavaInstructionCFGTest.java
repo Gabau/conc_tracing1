@@ -54,7 +54,5 @@ public class JavaInstructionCFGTest {
 		assertNotNull(testMethod);
 		HashMap<String, JavaInstructionCFG> result = JavaInstructionCFG.fromMethodRecursive(new MethodGen(testMethod, cg.getClassName(), cg.getConstantPool()));
 		JavaInstructionCFG actualK = result.get("classloading_test.classloading.analysis.JavaInstructionCFGTest:testMethod:()V");
-		System.out.println(result);
-		System.out.println(result.get("JavaInstructionCFGTest:testMethod:()V"));
 	}
 }

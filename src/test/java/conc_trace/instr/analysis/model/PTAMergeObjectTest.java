@@ -15,8 +15,8 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
 import org.junit.jupiter.api.Test;
 
-import conc_trace.instr.analysis.PTAMergeObject;
 import conc_trace.instr.analysis.pta.PTAIntValue;
+import conc_trace.instr.analysis.pta.PTAMergeObject;
 import conc_trace.instr.analysis.pta.PTAObject;
 
 public class PTAMergeObjectTest {
@@ -111,8 +111,23 @@ public class PTAMergeObjectTest {
 		// test putting to the merge object
 		mergeObject.putField("name", createTypedObject(Type.NULL));
 		assertTrue(childrenObjects.get(0).getField("name").isType(Type.NULL));
-		
+		assertTrue(childrenObjects.get(1).getField("name").isType(Type.NULL));
+		fieldObject = mergeObject.getField("name");
+		assertTrue(fieldObject.isType(Type.NULL));
+		assertFalse(fieldObject.isType(Type.STRING));
+	}
+	
+	@Test
+	public void testChainOfMerge() {
+		PTAObject rootObject = createTypedObject(Type.STRING);
+		PTAMergeObject mergeObject1 = new PTAMergeObject();
+		PTAMergeObject mergeObject2 = new PTAMergeObject();
+		PTAMergeObject mergeObject3 = new PTAMergeObject();
+		mergeObject1.union(rootObject);
 		
 	}
+	
+	
+	
 	
 }

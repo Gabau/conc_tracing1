@@ -81,7 +81,7 @@ import conc_trace.instr.analysis.pta.exceptions.PTAInstructionExecutorException;
  * 
  * List of instructioons that need instruction location:
  * NEW
- * 
+ * GETFIElD, SETFIELD
  * @author Gabau
  *
  */
@@ -457,12 +457,6 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 		
 	}
 
-	// todo: what to do during jsr
-	@Override
-	public void visitJsrInstruction(JsrInstruction obj) {
-		// TODO Auto-generated method stub
-		super.visitJsrInstruction(obj);
-	}
 
 	@Override
 	public void visitPUTFIELD(PUTFIELD obj) {
@@ -505,15 +499,30 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 		PTAObject currObject = getAndPopObject();
 		staticObjects.put(obj.getSignature(cpg), currObject);
 	}
+	
+
+	// todo: what to do during jsr
+	// shld not need to do anything, as jsr is a branch instruction
+	@Override
+	public void visitJsrInstruction(JsrInstruction obj) {
+		// TODO Auto-generated method stub
+		super.visitJsrInstruction(obj);
+	}
 
 	// TODO: update access to object iff virtual
 	// have to resolve the virtual function dynamically - need to check if the object has been initialised
 	// if we do it in order -> the initialisation should have already been called,
 	// so it's possible to have that as an assumption, that the actual class of this object can be resolved.
+	// Simple method to do the invocation
+	// -> Invoke the method's CFG and get the reseult.
+	// problems: Cyclic deps
+	// Idea: Return a reference to a PTAObject representing that methods return result.
 	@Override
 	public void visitInvokeInstruction(InvokeInstruction obj) {
-		// TODO Auto-generated method stub
-		super.visitInvokeInstruction(obj);
+		// assume that the object types are fixed
+		int numConsumed = obj.consumeStack(cpg);
+		// evaluate the function.
+		
 	}
 	
 	

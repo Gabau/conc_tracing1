@@ -81,6 +81,16 @@ public class JavaInstructionCFGNode {
 		return instructions;
 	}
 	
+	public List<InstructionHandle> getInstructionHandles() {
+		List<InstructionHandle> handles = new LinkedList<>();
+		InstructionHandle currentInstr = firstInstruction;
+		while (currentInstr != null && !currentInstr.equals(lastInstruction.getNext())) {
+			handles.add(currentInstr);
+			currentInstr = currentInstr.getNext();
+		}
+		return handles;
+	}
+	
 	public InstructionHandle getFirst() {
 		return this.firstInstruction;
 	}

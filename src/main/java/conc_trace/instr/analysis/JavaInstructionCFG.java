@@ -13,6 +13,7 @@ import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.BranchInstruction;
 import org.apache.bcel.generic.ClassGen;
+import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.INVOKEVIRTUAL;
 import org.apache.bcel.generic.IfInstruction;
@@ -44,6 +45,10 @@ public class JavaInstructionCFG {
 	
 	public MethodGen getMethod() {
 		return this.method;
+	}
+	
+	public ConstantPoolGen getCPG() {
+		return this.method.getConstantPool();
 	}
 	
 	public static String generateHash(MethodGen method) {

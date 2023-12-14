@@ -16,14 +16,23 @@ public class InstructionLocation {
 		NEW_CREATION, // created by new instruction
 		NEW_ARRAY // created via a new array
 	}
+	
+	// the byteoffset of an instruction
 	protected int instructionLocation;
 	protected Method method;
 	// class name used to access the location
 	protected String className;
 	protected Type instructionType;
+	
 
-	public static InstructionLocation fromCFGInstruction(JavaInstructionCFGNode node, int instruction) {
-		return null;
+	
+	public static InstructionLocation fromCFGInstruction(
+			JavaInstructionCFG cfg, int instruction) {
+		InstructionLocation newLoc = new InstructionLocation();
+		newLoc.instructionLocation = instruction;
+		newLoc.method = cfg.getMethod().getMethod();
+		newLoc.className = cfg.getMethod().getClassName();
+		return newLoc;
 	}
 	
 	@Override

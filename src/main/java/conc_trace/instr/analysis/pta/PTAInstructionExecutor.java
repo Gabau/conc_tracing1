@@ -15,6 +15,7 @@ import org.apache.bcel.generic.ANEWARRAY;
 import org.apache.bcel.generic.ArrayInstruction;
 import org.apache.bcel.generic.BALOAD;
 import org.apache.bcel.generic.BIPUSH;
+import org.apache.bcel.generic.BasicType;
 import org.apache.bcel.generic.CALOAD;
 import org.apache.bcel.generic.CHECKCAST;
 import org.apache.bcel.generic.ConstantPoolGen;
@@ -46,6 +47,7 @@ import org.apache.bcel.generic.LoadInstruction;
 import org.apache.bcel.generic.MONITORENTER;
 import org.apache.bcel.generic.MONITOREXIT;
 import org.apache.bcel.generic.MULTIANEWARRAY;
+import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.NEW;
 import org.apache.bcel.generic.NEWARRAY;
 import org.apache.bcel.generic.ObjectType;
@@ -89,6 +91,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 	private ArrayList<PTAObject> localVariables;
 	private FakeStack currentStack = new FakeStack();
 	private InstructionLocation currentInstructionLocation;
+	private MethodGen method;
 	private ConstantPoolGen cpg;
 	// used to keep track of thread objects
 	private ArrayList<PTAObject> threadObjects = new ArrayList<>();
@@ -101,7 +104,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 	private HashMap<String, PTAObject> staticObjects;
 	
 	// output variables
-	private PTAObject output = null;
+	private PTAMergeObject output = null;
 	// false iff the instruction cannot execute with the given state
 	public PTAInstructionExecutor() {
 		
@@ -109,6 +112,10 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 	
 	public boolean hasOutput() {
 		return output != null;
+	}
+	
+	public void setMethod(MethodGen method) {
+		this.method = method;
 	}
 	
 	public void resetOutput() {
@@ -127,8 +134,12 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 		this.cpg = cpg;
 	}
 
-	public void setLocalVariables(ArrayList<PTAObject> localVariables) {
-		this.localVariables = localVariables;
+	public PTAObject getOutput() {
+		return this.output;
+	}
+	
+	public void setLocalVariables(List<PTAObject> localVariables) {
+		this.localVariables = new ArrayList<>(localVariables);
 	}
 	
 	public void setCurrentStack(FakeStack fakeStack) {
@@ -166,7 +177,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 		if (currObject == null || nextObject == null) {
 			this.notValid("Adding when null on stack");
 		}
-		currentStack.push(PTAObject.getUnknownIntObject());
+		currentStack.push(PrimitivePTAObject.getUnknownIntObject());
 	}
 
 	@Override
@@ -178,7 +189,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 			currentStack.push(PTAIntValue.fromValue(result));
 			return;
 		}
-		currentStack.push(PTAObject.getUnknownIntObject());
+		currentStack.push(PrimitivePTAObject.getUnknownIntObject());
 	}
 
 	// does not compute arithmetic, cause it will be too expensive espcially
@@ -192,7 +203,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 		if (nextObject == null || currObject == null) {
 			notValid("Invalid state, attempt to INEG only one item on stack");
 		}
-		currentStack.push(PTAObject.getUnknownIntObject());
+		currentStack.push(PrimitivePTAObject.getUnknownIntObject());
 	}
 
 	@Override
@@ -249,17 +260,9 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 			currentStack.clear();
 			return;
 		}
-		this.output = currentStack.getObject();
-		if (this.output == null) {
-			this.notValid("Wrong return type");
-		} else if (this.output != null &&
-				obj.getOpcode() != Const.RETURN &&
-				!this.output.isType(obj.getType())) {
-			// deal with wrong type
-			this.notValid("Wrong return type");
-		}
-		// clear the stack.
-		currentStack.clear();	
+		this.output = PTAMergeObject.getMethodReturnObject(method);
+		this.output.union(currentStack.getObject());
+		currentStack.clear();
 	}
 	
 	
@@ -287,12 +290,12 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 	@Override
 	public void visitLDC(LDC obj) {
 		Type type = obj.getType(cpg);
-		currentStack.push(PTAObject.fromPrimitive(type));
+		currentStack.push(PrimitivePTAObject.getPrimitive((BasicType) type));
 	}
 	@Override
 	public void visitLDC2_W(LDC2_W obj) {
 		Type type = obj.getType(cpg);
-		currentStack.push(PTAObject.fromPrimitive(type));
+		currentStack.push(PrimitivePTAObject.getPrimitive((BasicType) type));
 	}
 	@Override
 	public void visitLoadInstruction(LoadInstruction obj) {
@@ -307,7 +310,7 @@ public class PTAInstructionExecutor extends EmptyVisitor {
 			currentStack.push(PTAIntValue.fromValue(obj.getValue().intValue()));
 			return;
 		}
-		currentStack.push(PTAObject.fromPrimitive(obj.getType(cpg)));
+		currentStack.push(PrimitivePTAObject.getPrimitive((BasicType) obj.getType(cpg)));
 	}
 	
 	@Override

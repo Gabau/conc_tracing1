@@ -21,13 +21,15 @@ import conc_trace.instr.analysis.pta.exceptions.PTAInstructionExecutorException;
  */
 public class PTAObject {
 
+	private static class PrimitivePTAObject extends PTAObject {
+		
+	}
+	
 	// todo: determine if the void return is needed, doesn't seem like 
 	// jvm pushes void return onto stack.
 	private static final PTAObject VOID_RETURN = new PTAObject();
 	// represents an unknown int value
 	private static PTAObject EMPTY_INT_VALUE;
-	
-	private static HashMap<Type, PTAObject> primitiveFlyWeight = new HashMap<>(); 
 	
 	public static enum State {
 		TYPE_UNKNOWN, // when we haven't determined the type of this object
@@ -49,55 +51,55 @@ public class PTAObject {
 	 * new iff the object was created directly.
 	 */
 	protected InstructionLocation creationLocation;
-	// binding for other creation locations -> to use during merge
-	protected List<InstructionLocation> otherCreationLocations;
 	protected State state = State.TYPE_DETERMINED;
-	protected boolean isVoid = false;
 	protected HashMap<String, PTAObject> fields = new HashMap<>();
 	
-	// flyweight for int
-	public static PTAObject getUnknownIntObject() {
-		return fromPrimitive(Type.INT);
-	}
+	
 	
 	public PTAObject() {
 		
 	}
 	
+	/**
+	 * Puts the given object into the field.
+	 * @param fieldName
+	 * @param field
+	 */
 	public void putField(String fieldName, PTAObject field) {
 		fields.put(fieldName, field);
 	}
 	
+	/**
+	 * Gets the object ref at a given field.
+	 * @param fieldName
+	 * @return
+	 */
 	public PTAObject getField(String fieldName) {
 		return fields.get(fieldName);
 	}
 	
+	
+	/**
+	 * Adds an access location to the object.
+	 * @param location
+	 */
 	public void addAccessLocation(InstructionLocation location) {
 		accessLocations.add(location);
 	}
 	
-	public static PTAObject getVoidReturn() {
-		VOID_RETURN.isVoid = true;
-		return VOID_RETURN;
-	}
 	
 	public boolean isVoid() {
-		return this.isVoid;
+		return this.isType(Type.VOID);
 	}
 	
 	protected PTAObject(Type objectType) {
 		this.type.add(objectType);
 	}
-
-	public static PTAObject fromPrimitive(Type objectType) {
-		assert(objectType instanceof BasicType);
-		if (primitiveFlyWeight.containsKey(objectType)) {
-			return primitiveFlyWeight.get(objectType);
-		}
-		primitiveFlyWeight.put(objectType, new PTAObject(objectType));
-		return primitiveFlyWeight.get(objectType);
-	}
 	
+	/**
+	 * Creates a type to add to the object.
+	 * @param objectType
+	 */
 	public void addType(Type objectType) {
 		this.type.add(objectType);
 	}
@@ -110,9 +112,6 @@ public class PTAObject {
 	}
 	
 	public boolean isType(Type objectType) {
-		if (this.isVoid()) {
-			return objectType.equals(Type.VOID);
-		}
 		return this.type.contains(objectType);
 	}
 	
@@ -156,7 +155,7 @@ public class PTAObject {
 	}
 	@Override
 	public int hashCode() {
-		return Objects.hash(creationLocation, isVoid, otherCreationLocations, state, superClass, type);
+		return Objects.hash(creationLocation, state, superClass, type);
 	}
 	@Override
 	public boolean equals(Object obj) {
@@ -167,8 +166,11 @@ public class PTAObject {
 		if (getClass() != obj.getClass())
 			return false;
 		PTAObject other = (PTAObject) obj;
-		return Objects.equals(creationLocation, other.creationLocation) && isVoid == other.isVoid
-				&& Objects.equals(otherCreationLocations, other.otherCreationLocations) && state == other.state
-				&& Objects.equals(superClass, other.superClass) && Objects.equals(type, other.type);
+		return Objects.equals(creationLocation, other.creationLocation)
+				&& state == other.state
+				&& Objects.equals(superClass, other.superClass) 
+				&& Objects.equals(type, other.type)
+				// TODO: not needed to equals
+				&& Objects.equals(fields, other.fields);
 	}
 }

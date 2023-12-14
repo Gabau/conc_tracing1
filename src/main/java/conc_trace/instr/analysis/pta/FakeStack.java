@@ -99,5 +99,14 @@ public class FakeStack {
 		return this.stack.toString();
 	}
 
+	protected FakeStack duplicateStack() {
+		// TODO Auto-generated method stub
+		FakeStack newStack = new FakeStack();
+		for (PTAObject obj : stack) {
+			newStack.push(obj);
+		}
+		return newStack;
+	}
+
 	
 }

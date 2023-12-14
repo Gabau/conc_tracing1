@@ -1,9 +1,11 @@
-package conc_trace.instr.analysis;
+package conc_trace.instr.analysis.pta;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -13,7 +15,8 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
 
-import conc_trace.instr.analysis.pta.PTAObject;
+import conc_trace.instr.analysis.InstructionLocation;
+import conc_trace.instr.analysis.pta.exceptions.PTAInstructionExecutorException;
 
 /**
  * Represents a union of a group of objects.
@@ -21,9 +24,8 @@ import conc_trace.instr.analysis.pta.PTAObject;
  *
  */
 public class PTAMergeObject extends PTAObject {
-
-	// Should not have any cycles!!!
-	private LinkedList<PTAObject> childrenObjects = new LinkedList<>();
+	
+	private HashSet<PTAObject> childrenObjectSet = new HashSet<>();
 	private Iterator<PTAObject> listIterator = null;
 	// used to keep track of any changes
 	// only update once processing is done
@@ -41,14 +43,6 @@ public class PTAMergeObject extends PTAObject {
 				method.getSignature());
 	}
 	
-	/**
-	 * Check if any processing needs to be done.
-	 * @return
-	 */
-	private boolean hasChanged() {
-		return childrenSize != childrenObjects.size();
-	}
-	
 	// TODO:
 	// Add types optimisation.
 	private void process(PTAObject childObject) {
@@ -57,26 +51,25 @@ public class PTAMergeObject extends PTAObject {
 			PTAMergeObject mergeField = (PTAMergeObject) fields.get(key);
 			mergeField.union(childObject.getField(key));
 		}
-	
-	}
-	
-	private void process() {
-		if (childrenSize == childrenObjects.size()) {
-			return;
-		}
-		if (listIterator == null) {
-			listIterator = childrenObjects.listIterator();
-		}
-		while (listIterator.hasNext()) {
-			PTAObject current = listIterator.next();
-			process(current);
-		}
 		
 	}
 	
+
+	
+	/**
+	 * Instances when union is called:
+	 *  * 
+	 * @param childObject
+	 */
 	public void union(PTAObject childObject) {
-		assert(childObject != this);
-		this.childrenObjects.add(childObject);
+		assert(!(childObject instanceof PTAMergeObject));
+		this.childrenObjectSet.add(childObject);
+	}
+	
+	// todo -> make use of union find to flatten this tree.
+	public void union(PTAMergeObject childObject) {
+		this.childrenObjectSet.addAll(childObject.childrenObjectSet);
+//		this.childrenObjects.addAll(childObject.childrenObjects);
 	}
 	
 	/**
@@ -84,11 +77,12 @@ public class PTAMergeObject extends PTAObject {
 	 */
 	@Override
 	public void putField(String fieldName, PTAObject field) {
-		for (PTAObject child : childrenObjects) {
+		for (PTAObject child : childrenObjectSet) {
 			child.putField(fieldName, field);
 		}
-		
-		super.putField(fieldName, field);
+		PTAMergeObject newMergeObject = new PTAMergeObject();
+		newMergeObject.union(field);
+		super.putField(fieldName, newMergeObject);
 	}
 
 	/**
@@ -97,13 +91,12 @@ public class PTAMergeObject extends PTAObject {
 	 */
 	@Override
 	public PTAObject getField(String fieldName) {
-		process();
 		// todo: check if this is still needed after process
 		// is added
 		if (!this.fields.containsKey(fieldName)) {
 			// create the new merge object
 			PTAMergeObject generatedObject = new PTAMergeObject();
-			for (PTAObject child: childrenObjects) {
+			for (PTAObject child: childrenObjectSet) {
 				generatedObject.union(child.getField(fieldName));
 			}
 			// add the field to the parent object.
@@ -114,19 +107,19 @@ public class PTAMergeObject extends PTAObject {
 
 	@Override
 	public void addAccessLocation(InstructionLocation location) {
-		// TODO Auto-generated method stub
+		// propogate access location to children
+		for (PTAObject childObject: childrenObjectSet) {
+			childObject.addAccessLocation(location);
+		}
+		// only store the access locations of the merge object
+		// TODO: consider not storing this location.
 		super.addAccessLocation(location);
 	}
 
 	@Override
 	public boolean isType(Type objectType) {
-		process();
-		if (super.isType(objectType)) {
-			return true;
-		}
-		for (PTAObject child: childrenObjects) {
+		for (PTAObject child: childrenObjectSet) {
 			if (child.isType(objectType)) {
-				super.addType(objectType);
 				return true;
 			}
 		}
@@ -135,14 +128,13 @@ public class PTAMergeObject extends PTAObject {
 
 	@Override
 	public boolean isIntValue() {
-		if (childrenObjects.size() == 0) return false;
+		if (childrenObjectSet.size() == 0) return false;
 		// two things needed -> all the fields are int values
 		// and all the values are the same.
 		boolean isIntVal = true;
-		Integer current = null;
 		// TODO: can add this to preprocessing
 		// there is little chance that this is needed tho
-		for (PTAObject objects: childrenObjects) {
+		for (PTAObject objects: childrenObjectSet) {
 			if (!objects.isIntValue()) {
 				return false;
 			}
@@ -152,7 +144,10 @@ public class PTAMergeObject extends PTAObject {
 
 	@Override
 	public int getValue() {
-		return childrenObjects.getFirst().getValue();
+		for (PTAObject object : childrenObjectSet) {
+			return object.getValue();
+		}
+		throw new PTAInstructionExecutorException("Invalid value", creationLocation);
 	}
 
 	public PTAMergeObject() {
@@ -164,6 +159,27 @@ public class PTAMergeObject extends PTAObject {
 			methodReturnObjects.put(methodHash, new PTAMergeObject());
 		}
 		return methodReturnObjects.get(methodHash);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(childrenObjectSet);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PTAMergeObject other = (PTAMergeObject) obj;
+		return Objects.equals(childrenObjectSet, other.childrenObjectSet)
+				&& Objects.equals(fields, other.fields);
 	}
 
 	
